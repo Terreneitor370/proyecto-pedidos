@@ -1,4 +1,5 @@
-﻿import { useProducts } from "../../shared/context/ProductsContext";
+﻿import "./catalog.css";
+import { useProducts } from "../../shared/context/ProductsContext";
 import { useProductFilters } from "./hooks/useProductFilters";
 import SearchBar from "./components/SearchBar";
 import CategoryFilter from "./components/CategoryFilter";

@@ -1,5 +1,8 @@
-﻿export default function ProductCard({ product }) {
+﻿import { useCart } from "../../../shared/context/CartContext";
+
+export default function ProductCard({ product }) {
   const { title, price, category, image, rating, stock } = product;
+  const { addToCart } = useCart();
 
   return (
     <div className="product-card">
@@ -11,8 +14,13 @@
         Rating: {rating?.rate ?? "N/A"} ({rating?.count ?? 0})
       </p>
       <p className="product-card__stock">Stock: {stock ?? "N/A"}</p>
-      {/* TODO: conectar con addToCart del CartContext cuando Jeshua termine Modulo 3 */}
-      <button className="product-card__button">Agregar al carrito</button>
+      <button
+        className="product-card__button"
+        onClick={() => addToCart(product, 1)}
+        disabled={stock === 0}
+      >
+        {stock === 0 ? "Sin stock" : "Agregar al carrito"}
+      </button>
     </div>
   );
 }
