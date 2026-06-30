@@ -1,4 +1,4 @@
-﻿import { ProductsProvider } from "./shared/context/ProductsContext";
+import { ProductsProvider } from "./shared/context/ProductsContext";
 import { CartProvider } from "./shared/context/CartContext";
 import Catalog from "./modules/catalog/index";
 import "./App.css";

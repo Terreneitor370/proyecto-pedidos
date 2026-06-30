@@ -1,8 +1,27 @@
-﻿import { useCart } from "../../../shared/context/CartContext";
+import { useCart } from "../../../shared/context/CartContext";
 
 export default function ProductCard({ product }) {
   const { title, price, category, image, rating, stock } = product;
-  const { addToCart } = useCart();
+  const { items, addToCart } = useCart();
+
+  const cartItem = items.find((i) => i.id === product.id);
+  const cartQty = cartItem ? cartItem.quantity : 0;
+
+  const sinStock = stock === 0;
+  const limiteAlcanzado = cartQty >= stock;
+
+  function handleAgregar() {
+    if (!sinStock && !limiteAlcanzado) {
+      addToCart(product, 1);
+    }
+  }
+
+  function getButtonLabel() {
+    if (sinStock) return "Sin stock";
+    if (limiteAlcanzado) return `Limite alcanzado (${cartQty}/${stock})`;
+    if (cartQty > 0) return `Agregar (${cartQty} en carrito)`;
+    return "Agregar al carrito";
+  }
 
   return (
     <div className="product-card">
@@ -16,10 +35,10 @@ export default function ProductCard({ product }) {
       <p className="product-card__stock">Stock: {stock ?? "N/A"}</p>
       <button
         className="product-card__button"
-        onClick={() => addToCart(product, 1)}
-        disabled={stock === 0}
+        onClick={handleAgregar}
+        disabled={sinStock || limiteAlcanzado}
       >
-        {stock === 0 ? "Sin stock" : "Agregar al carrito"}
+        {getButtonLabel()}
       </button>
     </div>
   );
