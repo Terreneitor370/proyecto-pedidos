@@ -1,7 +1,8 @@
-const { NotFoundError } = require("./cart.errors");
+const { NotFoundError, ValidationError } = require("./cart.errors");
 const {
   assertCartId,
   assertProductId,
+  assertUserId,
   assertQuantity,
   assertUnitPrice,
   assertTitle,
@@ -18,7 +19,10 @@ class CartService {
 
   async getCart(cartId) {
     assertCartId(cartId);
-    const cart = await this.#getOrCreateCart(cartId);
+    const cart = await this.repository.getById(cartId);
+    if (!cart) {
+      throw new NotFoundError("El carrito no existe", { cartId });
+    }
     return this.#toResponse(cart);
   }
 
@@ -26,14 +30,47 @@ class CartService {
     assertCartId(cartId);
     const productId = assertProductId(payload.productId);
     const quantity = assertQuantity(payload.quantity);
-    const title = assertTitle(payload.title);
-    const unitPrice = assertUnitPrice(payload.unitPrice);
+    const userId =
+      payload.userId === undefined || payload.userId === null ? null : assertUserId(payload.userId);
+    const title =
+      payload.title === undefined || payload.title === null ? null : assertTitle(payload.title);
+    const unitPrice =
+      payload.unitPrice === undefined || payload.unitPrice === null
+        ? null
+        : assertUnitPrice(payload.unitPrice);
 
     if (this.stockGateway && typeof this.stockGateway.ensureAvailable === "function") {
       await this.stockGateway.ensureAvailable({ productId, quantity });
     }
 
-    const cart = await this.#getOrCreateCart(cartId);
+    let cart = await this.repository.getById(cartId);
+    if (!cart) {
+      if (typeof this.repository.create !== "function") {
+        throw new NotFoundError("El carrito no existe", { cartId });
+      }
+
+      if (!userId) {
+        throw new ValidationError(
+          "El carrito no existe en DummyJSON. Envia userId para crearlo al agregar el primer item",
+          { cartId }
+        );
+      }
+
+      cart = await this.repository.create({
+        userId,
+        items: [
+          {
+            productId,
+            quantity,
+            title: title || `Producto ${productId}`,
+            unitPrice: unitPrice === null ? 0 : unitPrice,
+          },
+        ],
+      });
+
+      return this.#toResponse(cart);
+    }
+
     const existingItem = cart.items.find((item) => item.productId === productId);
 
     if (existingItem) {
@@ -43,15 +80,23 @@ class CartService {
       }
 
       existingItem.quantity = nextQuantity;
-      existingItem.unitPrice = unitPrice;
-      existingItem.title = title;
+      if (unitPrice !== null) {
+        existingItem.unitPrice = unitPrice;
+      }
+      if (title !== null) {
+        existingItem.title = title;
+      }
     } else {
       cart.items.push({
         productId,
-        title,
-        unitPrice,
+        title: title || `Producto ${productId}`,
+        unitPrice: unitPrice === null ? 0 : unitPrice,
         quantity,
       });
+    }
+
+    if (userId && !cart.userId) {
+      cart.userId = userId;
     }
 
     const saved = await this.repository.save(cart);
@@ -72,6 +117,11 @@ class CartService {
 
     if (quantity === 0) {
       cart.items = cart.items.filter((item) => item.productId !== productId);
+
+      if (cart.items.length === 0) {
+        await this.repository.clear(cartId);
+        return this.#toResponse({ cartId: String(cartId), items: [] });
+      }
     } else {
       if (this.stockGateway && typeof this.stockGateway.ensureAvailable === "function") {
         await this.stockGateway.ensureAvailable({ productId, quantity });
@@ -95,6 +145,11 @@ class CartService {
       throw new NotFoundError("El producto no existe en el carrito", { productId });
     }
 
+    if (cart.items.length === 0) {
+      await this.repository.clear(cartId);
+      return this.#toResponse({ cartId: String(cartId), items: [] });
+    }
+
     const saved = await this.repository.save(cart);
     return this.#toResponse(saved);
   }
@@ -102,15 +157,7 @@ class CartService {
   async clearCart(cartId) {
     assertCartId(cartId);
     await this.repository.clear(cartId);
-    return this.#toResponse({ cartId, items: [] });
-  }
-
-  async #getOrCreateCart(cartId) {
-    const existing = await this.repository.getById(cartId);
-    if (existing) {
-      return existing;
-    }
-    return { cartId, items: [] };
+    return this.#toResponse({ cartId: String(cartId), items: [] });
   }
 
   async #getExistingCart(cartId) {
@@ -122,16 +169,30 @@ class CartService {
   }
 
   async #toResponse(cart) {
-    const items = cart.items.map((item) => ({
-      productId: item.productId,
-      title: item.title,
-      unitPrice: roundMoney(item.unitPrice),
-      quantity: item.quantity,
-      lineTotal: roundMoney(item.unitPrice * item.quantity),
-    }));
+    const sourceItems = Array.isArray(cart.items) ? cart.items : [];
+    const items = sourceItems.map((item) => {
+      const normalizedPrice = roundMoney(Number(item.unitPrice) || 0);
+      const normalizedQuantity = Number(item.quantity) || 0;
+
+      return {
+        productId: Number(item.productId),
+        title:
+          typeof item.title === "string" && item.title.trim().length > 0
+            ? item.title.trim()
+            : `Producto ${item.productId}`,
+        unitPrice: normalizedPrice,
+        quantity: normalizedQuantity,
+        lineTotal: roundMoney(normalizedPrice * normalizedQuantity),
+      };
+    });
 
     const subtotal = roundMoney(items.reduce((acc, item) => acc + item.lineTotal, 0));
-    const discountRaw = await this.discountPolicy.calculate({ cartId: cart.cartId, items, subtotal });
+    const discountRaw = await this.discountPolicy.calculate({
+      cartId: String(cart.cartId),
+      userId: cart.userId || null,
+      items,
+      subtotal,
+    });
     const discount = roundMoney(Math.max(0, Number(discountRaw) || 0));
     const taxableAmount = roundMoney(Math.max(0, subtotal - discount));
     const tax = roundMoney(taxableAmount * this.taxRate);
@@ -139,7 +200,8 @@ class CartService {
     const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
     return {
-      cartId: cart.cartId,
+      cartId: String(cart.cartId),
+      userId: cart.userId || null,
       items,
       summary: {
         subtotal,

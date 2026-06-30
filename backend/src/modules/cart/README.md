@@ -1,35 +1,55 @@
 # Backend - Modulo de Carrito
 
-Implementacion backend del carrito en Node.js/Express, aislada en esta carpeta para cumplir la regla de propiedad por modulo.
+Implementacion backend del carrito en Node.js/Express que usa DummyJSON carts como fuente principal de datos remota.
+
+## Fuente de datos
+
+- API externa: https://dummyjson.com/carts
+- Repositorio por defecto: DummyJsonCartRepository
 
 ## Endpoints expuestos
 
-Base sugerida de montaje: `/api/cart`
+Base sugerida de montaje: /api/cart
 
-1. `GET /api/cart/:cartId`
-2. `POST /api/cart/:cartId/items`
-3. `PATCH /api/cart/:cartId/items/:productId`
-4. `DELETE /api/cart/:cartId/items/:productId`
-5. `DELETE /api/cart/:cartId`
+1. GET /api/cart/:cartId
+2. POST /api/cart/:cartId/items
+3. PATCH /api/cart/:cartId/items/:productId
+4. DELETE /api/cart/:cartId/items/:productId
+5. DELETE /api/cart/:cartId
+
+## Reglas de integracion con DummyJSON
+
+- cartId debe ser numerico (id de carrito en DummyJSON).
+- Si el cartId no existe y quieres agregar el primer item, envia userId en el body para crear carrito remoto.
 
 ## Contratos de request
 
-### Agregar producto
+### Agregar producto a carrito existente
 
-`POST /api/cart/:cartId/items`
+POST /api/cart/:cartId/items
 
 ```json
 {
   "productId": 1,
-  "title": "Classic Burger",
-  "unitPrice": 149.9,
+  "quantity": 2
+}
+```
+
+### Crear carrito remoto y agregar primer producto
+
+POST /api/cart/:cartId/items
+
+```json
+{
+  "userId": 7,
+  "productId": 1,
   "quantity": 2
 }
 ```
 
 ### Actualizar cantidad
 
-`PATCH /api/cart/:cartId/items/:productId`
+PATCH /api/cart/:cartId/items/:productId
 
 ```json
 {
@@ -37,28 +57,29 @@ Base sugerida de montaje: `/api/cart`
 }
 ```
 
-Si `quantity` es `0`, el item se elimina del carrito.
+Si quantity es 0, el item se elimina.
 
 ## Respuesta estandar
 
 ```json
 {
-  "cartId": "session-123",
+  "cartId": "1",
+  "userId": 33,
   "items": [
     {
-      "productId": 1,
-      "title": "Classic Burger",
-      "unitPrice": 149.9,
+      "productId": 59,
+      "title": "Spring and summershoes",
+      "unitPrice": 20,
       "quantity": 2,
-      "lineTotal": 299.8
+      "lineTotal": 40
     }
   ],
   "summary": {
-    "subtotal": 299.8,
+    "subtotal": 40,
     "discount": 0,
     "taxRate": 0.16,
-    "tax": 47.97,
-    "total": 347.77,
+    "tax": 6.4,
+    "total": 46.4,
     "itemCount": 2,
     "distinctItems": 1
   }
@@ -78,10 +99,8 @@ const cartModule = createCartModule();
 app.use("/api/cart", cartModule.router);
 ```
 
-## Extension para conectar APIs de companeros
+## Dependencias opcionales
 
-- `stockGateway` (opcional): inyecta `ensureAvailable({ productId, quantity })` para validar inventario desde otra API.
-- `discountPolicy` (opcional): inyecta `calculate({ cartId, items, subtotal })` para reglas de descuento.
-- `repository` (opcional): reemplaza memoria por MySQL/Redis sin tocar rutas ni controlador.
-
-Todo el modulo trabaja con metodos asincronos para mantener compatibilidad con integraciones remotas.
+- stockGateway: ensureAvailable({ productId, quantity })
+- discountPolicy: calculate({ cartId, userId, items, subtotal })
+- repository: puedes inyectar InMemoryCartRepository para desarrollo local sin red

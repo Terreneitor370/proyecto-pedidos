@@ -19,6 +19,12 @@ class NotFoundError extends CartError {
   }
 }
 
+class ExternalServiceError extends CartError {
+  constructor(message, details = null) {
+    super(message, 502, details);
+  }
+}
+
 function toHttpErrorPayload(error) {
   const statusCode = error.statusCode || 500;
   const payload = {
@@ -39,5 +45,6 @@ module.exports = {
   CartError,
   ValidationError,
   NotFoundError,
+  ExternalServiceError,
   toHttpErrorPayload,
 };

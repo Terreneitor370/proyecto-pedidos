@@ -14,6 +14,14 @@ function assertProductId(productId) {
   return parsedId;
 }
 
+function assertUserId(userId) {
+  const parsedUserId = Number(userId);
+  if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) {
+    throw new ValidationError("userId debe ser un entero positivo");
+  }
+  return parsedUserId;
+}
+
 function assertQuantity(quantity, { allowZero = false } = {}) {
   const parsedQuantity = Number(quantity);
   const validNumber = Number.isInteger(parsedQuantity);
@@ -51,6 +59,7 @@ function roundMoney(value) {
 module.exports = {
   assertCartId,
   assertProductId,
+  assertUserId,
   assertQuantity,
   assertUnitPrice,
   assertTitle,

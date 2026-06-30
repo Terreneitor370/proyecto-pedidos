@@ -2,9 +2,10 @@ const { CartService } = require("./cart.service");
 const { createCartController } = require("./cart.controller");
 const { createCartRouter } = require("./cart.routes");
 const { InMemoryCartRepository } = require("./cart.repository.memory");
+const { DummyJsonCartRepository } = require("./cart.repository.dummyjson");
 
 function createCartModule({
-  repository = new InMemoryCartRepository(),
+  repository = new DummyJsonCartRepository(),
   stockGateway = null,
   discountPolicy = null,
   taxRate = 0.16,
@@ -29,5 +30,6 @@ function createCartModule({
 module.exports = {
   createCartModule,
   CartService,
+  DummyJsonCartRepository,
   InMemoryCartRepository,
 };
