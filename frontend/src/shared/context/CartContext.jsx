@@ -4,80 +4,56 @@ const CartContext = createContext(null);
 
 const IVA_RATE = 0.16;
 
-// --- Reducer ---
 function cartReducer(state, action) {
   switch (action.type) {
     case "ADD_ITEM": {
-      const existing = state.items.find((i) => i.id === action.product.id);
+      const existing = state.find((i) => i.id === action.product.id);
+      const maxStock = action.product.stock ?? Infinity;
+
       if (existing) {
-        return {
-          ...state,
-          items: state.items.map((i) =>
-            i.id === action.product.id
-              ? { ...i, quantity: i.quantity + action.quantity }
-              : i
-          ),
-        };
+        const newQty = existing.quantity + action.quantity;
+        if (newQty > maxStock) return state; // ya en el limite, no hacer nada
+        return state.map((i) =>
+          i.id === action.product.id ? { ...i, quantity: newQty } : i
+        );
       }
-      return {
-        ...state,
-        items: [...state.items, { ...action.product, quantity: action.quantity }],
-      };
+
+      const qty = Math.min(action.quantity, maxStock);
+      if (qty <= 0) return state;
+      return [...state, { ...action.product, quantity: qty }];
     }
 
     case "REMOVE_ITEM":
-      return {
-        ...state,
-        items: state.items.filter((i) => i.id !== action.productId),
-      };
+      return state.filter((i) => i.id !== action.productId);
 
     case "UPDATE_QUANTITY": {
-      const newQty = action.quantity;
-      if (newQty <= 0) {
-        return {
-          ...state,
-          items: state.items.filter((i) => i.id !== action.productId),
-        };
+      if (action.quantity <= 0) {
+        return state.filter((i) => i.id !== action.productId);
       }
-      return {
-        ...state,
-        items: state.items.map((i) =>
-          i.id === action.productId ? { ...i, quantity: newQty } : i
-        ),
-      };
+      return state.map((i) => {
+        if (i.id !== action.productId) return i;
+        const maxStock = i.stock ?? Infinity;
+        return { ...i, quantity: Math.min(action.quantity, maxStock) };
+      });
     }
 
     case "CLEAR_CART":
-      return { ...state, items: [] };
-
-    case "SET_DESCUENTO":
-      return { ...state, descuento: Math.max(0, action.amount) };
+      return [];
 
     default:
       return state;
   }
 }
 
-const initialState = {
-  items: [],
-  descuento: 0,
-};
-
-// --- Provider ---
 export function CartProvider({ children }) {
-  const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [items, dispatch] = useReducer(cartReducer, []);
 
-  const totales = useMemo(() => {
-    const subtotal = state.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    const descuento = Math.min(state.descuento, subtotal);
-    const base = subtotal - descuento;
-    const iva = base * IVA_RATE;
-    const total = base + iva;
-    return { subtotal, descuento, iva, total };
-  }, [state.items, state.descuento]);
+  const { subtotal, iva, total } = useMemo(() => {
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const iva = subtotal * IVA_RATE;
+    const total = subtotal + iva;
+    return { subtotal, iva, total };
+  }, [items]);
 
   function addToCart(product, quantity = 1) {
     dispatch({ type: "ADD_ITEM", product, quantity });
@@ -95,25 +71,13 @@ export function CartProvider({ children }) {
     dispatch({ type: "CLEAR_CART" });
   }
 
-  function applyDescuento(amount) {
-    dispatch({ type: "SET_DESCUENTO", amount });
-  }
-
-  const value = {
-    items: state.items,
-    ...totales,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    applyDescuento,
-  };
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={{ items, subtotal, iva, total, addToCart, removeFromCart, updateQuantity, clearCart }}>
+      {children}
+    </CartContext.Provider>
+  );
 }
 
-// --- Hook ---
-// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
   const context = useContext(CartContext);
   if (!context) {
