@@ -3,7 +3,10 @@ import axios from "axios";
 
 const ProductsContext = createContext(null);
 
-const API_URL = "http://localhost:4000/api/products";
+// OWASP A05: URL del backend desde variable de entorno, nunca hardcodeada
+const API_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/products`
+  : "http://localhost:4000/api/products";
 
 export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
