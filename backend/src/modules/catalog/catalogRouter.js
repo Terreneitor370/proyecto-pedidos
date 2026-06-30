@@ -4,37 +4,58 @@ const db = require("../../shared/db");
 
 const router = express.Router();
 
-// GET /api/products
-// BFF: combina productos de FakeStore con stock real de MySQL
+const FAKESTORE_URL = "https://fakestoreapi.com/products";
+
+function esProductoValido(p) {
+  return (
+    typeof p.id === "number" &&
+    typeof p.title === "string" &&
+    typeof p.price === "number" &&
+    typeof p.category === "string" &&
+    typeof p.image === "string" &&
+    typeof p.rating === "object" &&
+    p.rating !== null
+  );
+}
+
 router.get("/", async (req, res) => {
   try {
-    // 1. Obtener productos de FakeStore (operación asíncrona)
-    const { data: fakeProducts } = await axios.get(
-      "https://fakestoreapi.com/products"
-    );
+    const { data: fakeProducts } = await axios.get(FAKESTORE_URL, {
+      timeout: 8000,
+    });
 
-    // 2. Obtener stock desde MySQL
+    if (!Array.isArray(fakeProducts)) {
+      return res
+        .status(502)
+        .json({ error: "Respuesta inesperada de la API externa" });
+    }
+
+    const productosValidos = fakeProducts.filter(esProductoValido);
+
     const [stockRows] = await db.query(
       "SELECT product_id, quantity FROM stock"
     );
 
-    // Convertir rows a mapa { product_id: quantity } para búsqueda O(1)
     const stockMap = {};
-    stockRows.forEach((row) => {
+    stockRows.forEach(function(row) {
       stockMap[row.product_id] = row.quantity;
     });
 
-    // 3. Combinar: agregar campo stock a cada producto
-    const products = fakeProducts.map((product) => ({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      description: product.description,
-      category: product.category,
-      image: product.image,
-      rating: product.rating,
-      stock: stockMap[product.id] ?? 0, // 0 si no hay registro en MySQL
-    }));
+    const products = productosValidos.map(function(product) {
+      return {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        description: product.description,
+        category: product.category,
+        image: product.image,
+        rating: {
+          rate: product.rating.rate,
+          count: product.rating.count,
+        },
+        stock: stockMap[product.id] !== undefined ? stockMap[product.id] : 0,
+      };
+    });
 
     res.json(products);
   } catch (err) {
