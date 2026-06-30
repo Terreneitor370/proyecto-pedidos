@@ -7,7 +7,7 @@ const ProductGrid = () => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
-        <p>⏳ Cargando productos...</p>
+        <p>Cargando productos...</p>
       </div>
     );
   }
@@ -15,7 +15,7 @@ const ProductGrid = () => {
   if (error) {
     return (
       <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
-        <p>❌ Error: {error}</p>
+        <p>Error: {error}</p>
       </div>
     );
   }
@@ -72,7 +72,7 @@ const ProductGrid = () => {
               color: product.stock > 0 ? '#4CAF50' : '#f44336',
               fontWeight: 'bold'
             }}>
-              {product.stock > 0 ? `✅ Stock: ${product.stock}` : '❌ Sin stock'}
+              {product.stock > 0 ? `Stock: ${product.stock}` : 'Sin stock'}
             </p>
             <button
               style={{
@@ -87,7 +87,7 @@ const ProductGrid = () => {
               }}
               disabled={product.stock === 0}
             >
-              {product.stock > 0 ? '🛒 Agregar al carrito' : '❌ Agotado'}
+              {product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
             </button>
           </div>
         ))}
