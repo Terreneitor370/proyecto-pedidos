@@ -3,6 +3,7 @@ import { ProductsProvider } from './shared/context/ProductsContext';
 import { CartProvider } from './shared/context/CartContext';
 import { AuthProvider } from './shared/context/AuthContext';
 import SplashContainer from './modules/splash/SplashContainer';
+import ProductGrid from './modules/splash/ProductGrid';  // ← Importar
 import './shared/styles.css';
 
 function App() {
@@ -13,10 +14,7 @@ function App() {
           <SplashContainer>
             <div className="app-container">
               <h1>Fast Food - Sistema de Pedidos</h1>
-              <p>El catálogo se carga desde FakeStore API</p>
-              <p style={{ color: 'green', marginTop: '1rem' }}>
-                Módulo 1 funcionando correctamente
-              </p>
+              <ProductGrid />  {/* ← Mostrar productos */}
             </div>
           </SplashContainer>
         </AuthProvider>
