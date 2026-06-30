@@ -5,6 +5,7 @@ const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const catalogRouter = require("./modules/catalog/catalogRouter");
+const ordersRouter = require("./modules/orders/ordersRouter");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use(limiter);
 
 // ── Rutas ─────────────────────────────────────────────────────────────────────
 app.use("/api/products", catalogRouter);
+app.use("/api/orders", ordersRouter);
 
 // Health check (sin información sensible del servidor)
 app.get("/", (_req, res) => {
