@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useCart } from "../../shared/context/CartContext";
+import { useAuth } from "../auth/hooks/useAuth.js";
 import CartEmptyState from "./components/CartEmptyState";
 import CartItemRow from "./components/CartItemRow";
 import CartSummary from "./components/CartSummary";
@@ -27,6 +28,7 @@ export default function CartPage({
   currency = "MXN",
   onCheckout = null,
 }) {
+  const { user } = useAuth();
   const { items, subtotal, iva, total, clearCart, updateQuantity, removeFromCart } = useCart();
 
   const formatter = useMemo(
@@ -70,7 +72,10 @@ export default function CartPage({
     <section className="cart-page">
       <header className="cart-page__header">
         <h2>{title}</h2>
-        <p>{itemCount} articulo(s)</p>
+        <p>
+          {itemCount} articulo(s)
+          {user ? ` · Carrito de @${user.username}` : ""}
+        </p>
       </header>
 
       {items.length === 0 ? (
