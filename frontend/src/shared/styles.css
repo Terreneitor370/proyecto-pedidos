@@ -1,0 +1,54 @@
+:root {
+  --color-primary: #D62828;
+  --color-primary-dark: #b71c1c;
+  --color-secondary: #F77F00;
+
+  --color-bg: #1A1A1A;
+  --color-background: #1A1A1A;
+  --color-surface: #2A2A2A;
+  --color-card: #2A2A2A;
+
+  --color-text: #F1F1F1;
+  --color-text-muted: #A0A0A0;
+  --color-text-secondary: #A0A0A0;
+
+  --color-success: #2E7D32;
+  --color-error: #C62828;
+  --color-danger: #C62828;
+  --color-warning: #F77F00;
+
+  --color-border: #3A3A3A;
+
+  --font-family: "Segoe UI", system-ui, sans-serif;
+  --font-size-sm: 0.85rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
