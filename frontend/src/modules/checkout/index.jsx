@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useCart } from "../../shared/context/CartContext";
+import { useAuth } from "../auth/hooks/useAuth.js";
 import "./checkout.css";
 
 const ORDERS_API_URL = import.meta.env.VITE_API_URL
@@ -45,12 +46,11 @@ function getErrorMessage(error, fallback) {
 }
 
 export default function CheckoutPage({
-  defaultUserId = 1,
   onBackToCart = null,
   onGoCatalog = null,
 }) {
+  const { user } = useAuth();
   const { items, subtotal, iva, total, clearCart } = useCart();
-  const [userId, setUserId] = useState(String(defaultUserId));
   const [steps, setSteps] = useState(getInitialSteps);
   const [summary, setSummary] = useState(null);
   const [ticket, setTicket] = useState(null);
@@ -146,9 +146,8 @@ export default function CheckoutPage({
   }, []);
 
   async function handleStripeCheckout() {
-    const numericUserId = Number(userId);
-    if (!Number.isInteger(numericUserId) || numericUserId <= 0) {
-      setMessage("El user_id debe ser un entero positivo");
+    if (!user?.id) {
+      setMessage("Debes iniciar sesión para completar el pago");
       return;
     }
 
@@ -171,7 +170,7 @@ export default function CheckoutPage({
     });
 
     const payload = {
-      user_id: numericUserId,
+      user_id: Number(user.id),
       items: toOrderPayloadItems(items),
     };
 
@@ -220,15 +219,6 @@ export default function CheckoutPage({
         <div className="checkout-layout">
           <div className="checkout-card">
             <h3>Datos del pago</h3>
-            <label htmlFor="checkout-user-id">User ID</label>
-            <input
-              id="checkout-user-id"
-              type="number"
-              min="1"
-              value={userId}
-              onChange={(event) => setUserId(event.target.value)}
-            />
-
             <p>Articulos en carrito: {itemCount}</p>
 
             <button
