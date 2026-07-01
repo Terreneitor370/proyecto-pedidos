@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ProductsProvider } from "./shared/context/ProductsContext";
 import { CartProvider, useCart } from "./shared/context/CartContext";
+import SplashContainer from "./modules/splash/SplashContainer";
 import Catalog from "./modules/catalog/index";
 import CartPage from "./modules/cart/index";
 import CheckoutPage from "./modules/checkout/index";
@@ -22,6 +23,7 @@ function AppContent() {
   );
 
   return (
+    <SplashContainer>
     <div className="app-shell">
       <header className="app-shell__header">
         <div>
@@ -65,6 +67,7 @@ function AppContent() {
         </section>
       </main>
     </div>
+    </SplashContainer>
   );
 }
 

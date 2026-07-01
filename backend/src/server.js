@@ -6,6 +6,7 @@ require("dotenv").config();
 
 const catalogRouter = require("./modules/catalog/catalogRouter");
 const ordersRouter = require("./modules/orders/ordersRouter");
+const { createCartModule } = require("./modules/cart");
 
 const app = express();
 
@@ -38,6 +39,8 @@ app.use(limiter);
 // ── Rutas ─────────────────────────────────────────────────────────────────────
 app.use("/api/products", catalogRouter);
 app.use("/api/orders", ordersRouter);
+const { router: cartRouter } = createCartModule();
+app.use("/api/cart", cartRouter);
 
 // Health check (sin información sensible del servidor)
 app.get("/", (_req, res) => {
