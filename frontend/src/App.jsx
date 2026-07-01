@@ -3,7 +3,7 @@ import { ProductsProvider } from './shared/context/ProductsContext';
 import { CartProvider } from './shared/context/CartContext';
 import { AuthProvider } from './shared/context/AuthContext';
 import SplashContainer from './modules/splash/SplashContainer';
-import ProductGrid from './modules/splash/ProductGrid';  // ← Importar
+import ProductGrid from './modules/splash/ProductGrid';
 import './shared/styles.css';
 
 function App() {
@@ -14,7 +14,7 @@ function App() {
           <SplashContainer>
             <div className="app-container">
               <h1>Fast Food - Sistema de Pedidos</h1>
-              <ProductGrid />  {/* ← Mostrar productos */}
+              <ProductGrid />
             </div>
           </SplashContainer>
         </AuthProvider>

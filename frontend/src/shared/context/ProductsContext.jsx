@@ -21,15 +21,15 @@ export const ProductsProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      console.log('Loading products from FakeStore...');
+      console.log('🔄 Loading products from FakeStore...');
       const realProducts = await fetchProductsFromFakeStore();
       
-      console.log(`${realProducts.length} products loaded`);
+      console.log(`✅ ${realProducts.length} products loaded`);
       setProducts(realProducts);
       setLoading(false);
       
     } catch (err) {
-      console.error('Error loading products:', err);
+      console.error('❌ Error loading products:', err);
       setError(err.message);
       setLoading(false);
     }
